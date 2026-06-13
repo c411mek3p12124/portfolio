@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Cash Flow Oracle — Prediksi Arus Kas 12 Bulan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#0B1120; --panel:#111827; --border:#1E293B;
+    --text:#E2E8F0; --muted:#64748B;
+    --blue:#3B82F6; --green:#10B981; --red:#EF4444; --amber:#F59E0B;
+    --radius:12px; --shadow:0 4px 24px rgba(0,0,0,.3);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased}
+  .num{font-family:'DM Mono',monospace;font-variant-numeric:tabular-nums}
+  .wrap{max-width:1040px;margin:0 auto;padding:24px 16px 80px}
+  header.top{display:flex;flex-direction:column;gap:6px;margin-bottom:24px}
+  header.top h1{font-size:26px;font-weight:700;letter-spacing:-.02em}
+  header.top .tag{color:var(--muted);font-size:15px}
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow)}
+  .panel + .panel{margin-top:16px}
+  h2{font-size:17px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+  label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+  input,select,textarea{width:100%;background:#0B1120;border:1px solid var(--border);color:var(--text);border-radius:8px;padding:10px 12px;font-size:14px;font-family:inherit;outline:none}
+  input:focus,select:focus,textarea:focus{border-color:var(--blue)}
+  input.num,td.num{font-family:'DM Mono',monospace}
+  textarea{resize:vertical;min-height:120px;line-height:1.6}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:none;border-radius:8px;padding:11px 18px;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;transition:filter .15s,background .15s}
+  .btn:hover{filter:brightness(1.1)}
+  .btn-primary{background:var(--blue);color:#fff;width:100%}
+  .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text)}
+  .btn-ghost.active{border-color:var(--blue);color:var(--blue)}
+  .btn-sm{padding:7px 12px;font-size:13px}
+  .toggle-row{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+  .field{margin-bottom:14px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--border)}
+  th{color:var(--muted);font-weight:500;font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+  td.num,th.num{text-align:right;font-family:'DM Mono',monospace}
+  .rowctrl{display:flex;gap:6px;align-items:center}
+  .icon-btn{background:#0B1120;border:1px solid var(--border);color:var(--muted);border-radius:6px;width:32px;height:32px;cursor:pointer;font-size:16px;display:inline-flex;align-items:center;justify-content:center}
+  .icon-btn:hover{color:var(--text);border-color:var(--blue)}
+  .metrics{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .metric{background:#0B1120;border:1px solid var(--border);border-radius:var(--radius);padding:16px}
+  .metric .mlabel{font-size:12px;color:var(--muted);margin-bottom:8px}
+  .metric .mval{font-size:22px;font-weight:600;font-family:'DM Mono',monospace}
+  .metric .msub{font-size:12px;color:var(--muted);margin-top:4px}
+  .pos{color:var(--green)} .neg{color:var(--red)} .warn{color:var(--amber)} .blue{color:var(--blue)}
+  .chart-wrap{overflow-x:auto}
+  svg.chart{width:100%;min-width:560px;height:320px;display:block}
+  .sliders{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .slider-block .sl-label{font-size:13px;color:var(--text);margin-bottom:8px;display:flex;justify-content:space-between}
+  .slider-block .sl-label b{font-family:'DM Mono',monospace}
+  input[type=range]{-webkit-appearance:none;appearance:none;height:6px;background:var(--border);border-radius:3px;padding:0}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--blue);cursor:pointer;border:2px solid #0B1120}
+  input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--blue);cursor:pointer;border:2px solid #0B1120}
+  .hidden{display:none}
+  .accordion{border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-top:8px}
+  .accordion summary{cursor:pointer;padding:12px 14px;font-size:14px;font-weight:500;list-style:none}
+  .accordion summary::-webkit-details-marker{display:none}
+  .accordion[open] summary{border-bottom:1px solid var(--border)}
+  .accordion .acc-body{padding:14px;font-size:13px;color:var(--muted);line-height:1.7}
+  .disclaimer{font-size:12px;color:var(--muted);background:#0B1120;border:1px solid var(--border);border-radius:8px;padding:12px;margin-top:16px}
+  footer{text-align:center;color:var(--muted);font-size:13px;margin-top:32px}
+  .ai-box{margin-top:14px;padding-top:14px;border-top:1px dashed var(--border)}
+  .ai-key-row{display:flex;gap:8px;margin-top:8px}
+  .ai-key-row input{flex:1}
+  .pill{display:inline-block;font-size:11px;padding:2px 8px;border-radius:99px;background:#0B1120;border:1px solid var(--border);color:var(--muted)}
+  .err{color:var(--red);font-size:13px;margin-top:8px}
+  .tooltip{position:fixed;pointer-events:none;background:#0B1120;border:1px solid var(--blue);border-radius:8px;padding:8px 10px;font-size:12px;z-index:50;opacity:0;transition:opacity .1s;font-family:'DM Mono',monospace;white-space:nowrap}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+  .blink{animation:blink 1s infinite}
+  @media(max-width:640px){
+    .grid2,.metrics,.sliders{grid-template-columns:1fr}
+    header.top h1{font-size:22px}
+    .wrap{padding:16px 12px 64px}
+    .metric .mval{font-size:19px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>Cash Flow Oracle</h1>
+    <div class="tag">Lihat kapan uangmu habis — atau berlipat — sebelum terjadi.</div>
+  </header>
+
+  <!-- INPUT -->
+  <section class="panel" id="inputPanel">
+    <h2>1 · Data Historis</h2>
+    <div class="toggle-row">
+      <button class="btn btn-ghost btn-sm active" id="tabManual" type="button">Input Manual</button>
+      <button class="btn btn-ghost btn-sm" id="tabAI" type="button">Mulai dari Teks Bebas (AI)</button>
+      <button class="btn btn-ghost btn-sm" id="loadSample" type="button">Muat Contoh</button>
+    </div>
+
+    <!-- Manual -->
+    <div id="manualMode">
+      <div class="chart-wrap">
+        <table id="histTable">
+          <thead><tr><th>Bulan</th><th>Tahun</th><th class="num">Pendapatan</th><th class="num">Pengeluaran</th><th></th></tr></thead>
+          <tbody id="histBody"></tbody>
+        </table>
+      </div>
+      <button class="btn btn-ghost btn-sm" id="addRow" type="button" style="margin-top:12px">+ Tambah Bulan</button>
+    </div>
+
+    <!-- AI -->
+    <div id="aiMode" class="hidden">
+      <label>Ketik data keuangan apa adanya (bahasa bebas)</label>
+      <textarea id="aiText" placeholder="Januari pendapatan 45jt pengeluaran 38jt&#10;Februari omzet 52jt biaya 41jt&#10;Maret masuk 48jt keluar 39jt sisa kas 15jt"></textarea>
+      <div class="ai-box">
+        <span class="pill">AI opsional</span>
+        <label style="margin-top:8px">Tempel API Key Anthropic Anda sendiri (sk-ant-…). Tidak disimpan.</label>
+        <div class="ai-key-row">
+          <input type="password" id="apiKeyAI" placeholder="sk-ant-..." autocomplete="off" />
+          <button class="btn btn-primary" id="parseAI" type="button" style="width:auto">Analisis dengan AI</button>
+        </div>
+        <div class="err hidden" id="aiErr"></div>
+      </div>
+    </div>
+
+    <div class="field" style="margin-top:18px">
+      <label>Saldo kas saat ini</label>
+      <input type="text" inputmode="numeric" class="num" id="currentCash" placeholder="Rp 0" />
+    </div>
+
+    <button class="btn btn-primary" id="calcBtn" type="button">Hitung Proyeksi</button>
+    <div class="err hidden" id="calcErr"></div>
+  </section>
+
+  <!-- DASHBOARD -->
+  <section id="dashboard" class="hidden">
+    <div class="panel">
+      <h2>2 · Metrik Utama</h2>
+      <div class="metrics" id="metricGrid"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Proyeksi Kas 12 Bulan</h2>
+      <div class="chart-wrap"><svg class="chart" id="chart" viewBox="0 0 720 320" preserveAspectRatio="none"></svg></div>
+    </div>
+
+    <div class="panel">
+      <h2>Tabel Proyeksi Bulanan</h2>
+      <div class="chart-wrap">
+        <table id="projTable">
+          <thead><tr><th>Bulan</th><th class="num">Pendapatan</th><th class="num">Pengeluaran</th><th class="num">Arus Kas</th><th class="num">Posisi Kas</th></tr></thead>
+          <tbody id="projBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Simulator "Bagaimana Kalau"</h2>
+      <div class="sliders">
+        <div class="slider-block">
+          <div class="sl-label"><span>Pendapatan berubah</span><b id="lblRev">0%</b></div>
+          <input type="range" id="slRev" min="-50" max="50" step="5" value="0" style="width:100%" />
+        </div>
+        <div class="slider-block">
+          <div class="sl-label"><span>Pengeluaran berubah</span><b id="lblExp">0%</b></div>
+          <input type="range" id="slExp" min="-30" max="30" step="5" value="0" style="width:100%" />
+        </div>
+        <div class="slider-block">
+          <div class="sl-label"><span>Pelanggan telat bayar</span><b id="lblLate">0 hari</b></div>
+          <input type="range" id="slLate" min="0" max="60" step="7" value="0" style="width:100%" />
+        </div>
+        <div class="slider-block">
+          <div class="sl-label"><span>Suntikan modal (bulan ke-1)</span><b id="lblInj">Rp 0</b></div>
+          <input type="text" inputmode="numeric" class="num" id="slInj" placeholder="Rp 0" />
+        </div>
+      </div>
+      <button class="btn btn-ghost btn-sm" id="resetSliders" type="button" style="margin-top:16px">Reset Semua Slider</button>
+    </div>
+
+    <div class="panel">
+      <h2>Ekstra</h2>
+      <button class="btn btn-ghost btn-sm" id="exportImg" type="button">Ekspor sebagai Gambar</button>
+      <details class="accordion">
+        <summary>Bagaimana hitungannya bekerja?</summary>
+        <div class="acc-body">
+          Proyeksi memakai rata-rata pendapatan & pengeluaran historis, ditambah tren linear (regresi)
+          untuk masing-masing. Jika ada ≥12 bulan data, indeks musiman per bulan dihitung. Posisi kas
+          tiap bulan = posisi sebelumnya + (proyeksi pendapatan − proyeksi pengeluaran). Confidence band
+          memakai standar deviasi arus kas historis × √bulan. Simulator menerapkan pengali pada
+          pendapatan/pengeluaran, menunda pendapatan akibat telat bayar, dan menambah modal di bulan 1.
+          Semua perhitungan berjalan di perangkat Anda.
+        </div>
+      </details>
+      <div class="disclaimer">
+        Ini alat estimasi berdasarkan data historis, bukan jaminan. Keputusan keuangan sebaiknya
+        divalidasi dengan ahli keuangan.
+      </div>
+    </div>
+  </section>
+
+  <footer>Dibuat untuk UMKM Indonesia</footer>
+</div>
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+/* ---------- helpers ---------- */
+const MONTHS=["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+const $=id=>document.getElementById(id);
+const fmtRp=n=>{const v=Math.round(n);return (v<0?"−Rp ":"Rp ")+Math.abs(v).toLocaleString("id-ID");};
+const parseNum=s=>{const d=String(s).replace(/[^\d]/g,"");return d?parseInt(d,10):0;};
+function bindRupiah(el){el.addEventListener("input",()=>{const v=parseNum(el.value);el.value=v?fmtRp(v).replace("−","-"):"";});}
+
+function linearRegression(values){
+  const n=values.length;let sumX=0,sumY=0,sumXY=0,sumX2=0;
+  for(let i=0;i<n;i++){sumX+=i;sumY+=values[i];sumXY+=i*values[i];sumX2+=i*i;}
+  const denom=(n*sumX2-sumX*sumX);
+  const slope=denom===0?0:(n*sumXY-sumX*sumY)/denom;
+  const intercept=(sumY-slope*sumX)/n;
+  return {slope,intercept};
+}
+function stddev(arr){
+  if(arr.length<2)return 0;
+  const m=arr.reduce((a,b)=>a+b,0)/arr.length;
+  return Math.sqrt(arr.reduce((a,b)=>a+(b-m)*(b-m),0)/(arr.length-1));
+}
+
+/* ---------- state ---------- */
+let history=[]; // {monthIdx, year, income, expense}
+let baseProjection=null;
+
+/* ---------- input mode toggle ---------- */
+$("tabManual").onclick=()=>{$("tabManual").classList.add("active");$("tabAI").classList.remove("active");$("manualMode").classList.remove("hidden");$("aiMode").classList.add("hidden");};
+$("tabAI").onclick=()=>{$("tabAI").classList.add("active");$("tabManual").classList.remove("active");$("aiMode").classList.remove("hidden");$("manualMode").classList.add("hidden");};
+
+/* ---------- manual table ---------- */
+function monthOptions(sel){return MONTHS.map((m,i)=>`<option value="${i}" ${i===sel?"selected":""}>${m}</option>`).join("");}
+function addRow(monthIdx,year,income,expense){
+  const tb=$("histBody");
+  const tr=document.createElement("tr");
+  const y=year||new Date().getFullYear();
+  const mi=monthIdx??(tb.children.length%12);
+  tr.innerHTML=`
+    <td><select class="m-month">${monthOptions(mi)}</select></td>
+    <td><input class="m-year num" type="number" value="${y}" style="width:84px"/></td>
+    <td><input class="m-inc num" inputmode="numeric" placeholder="Rp 0"/></td>
+    <td><input class="m-exp num" inputmode="numeric" placeholder="Rp 0"/></td>
+    <td><div class="rowctrl"><button class="icon-btn" title="Hapus">×</button></div></td>`;
+  tb.appendChild(tr);
+  const inc=tr.querySelector(".m-inc"),exp=tr.querySelector(".m-exp");
+  if(income)inc.value=fmtRp(income).replace("−","-");
+  if(expense)exp.value=fmtRp(expense).replace("−","-");
+  bindRupiah(inc);bindRupiah(exp);
+  tr.querySelector(".icon-btn").onclick=()=>tr.remove();
+}
+$("addRow").onclick=()=>addRow();
+
+/* seed 3 rows */
+for(let i=0;i<3;i++)addRow(i,new Date().getFullYear());
+bindRupiah($("currentCash"));
+bindRupiah($("slInj"));
+
+/* ---------- sample ---------- */
+$("loadSample").onclick=()=>{
+  $("histBody").innerHTML="";
+  const y=new Date().getFullYear();
+  const data=[[45000000,38000000],[52000000,41000000],[48000000,39000000],[55000000,42000000],[51000000,43000000],[58000000,44000000]];
+  data.forEach((d,i)=>addRow(i,y,d[0],d[1]));
+  $("currentCash").value=fmtRp(15000000).replace("−","-");
+  $("tabManual").click();
+};
+
+/* ---------- gather manual data ---------- */
+function readManual(){
+  const rows=[...$("histBody").children];
+  const out=[];
+  rows.forEach(tr=>{
+    const monthIdx=parseInt(tr.querySelector(".m-month").value,10);
+    const year=parseInt(tr.querySelector(".m-year").value,10)||new Date().getFullYear();
+    const income=parseNum(tr.querySelector(".m-inc").value);
+    const expense=parseNum(tr.querySelector(".m-exp").value);
+    if(income>0||expense>0)out.push({monthIdx,year,income,expense});
+  });
+  return out;
+}
+
+/* ---------- AI parse ---------- */
+async function callClaude(apiKey,system,user,maxTokens){
+  const res=await fetch("https://api.anthropic.com/v1/messages",{
+    method:"POST",
+    headers:{
+      "content-type":"application/json",
+      "x-api-key":apiKey,
+      "anthropic-version":"2023-06-01",
+      "anthropic-dangerous-direct-browser-access":"true"
+    },
+    body:JSON.stringify({
+      model:"claude-sonnet-4-6",
+      max_tokens:maxTokens,
+      system,
+      messages:[{role:"user",content:user}]
+    })
+  });
+  if(!res.ok){
+    let msg="HTTP "+res.status;
+    try{const j=await res.json();if(j.error&&j.error.message)msg=j.error.message;}catch(e){}
+    throw new Error(msg);
+  }
+  const data=await res.json();
+  return (data.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("");
+}
+
+$("parseAI").onclick=async()=>{
+  const key=$("apiKeyAI").value.trim();
+  const text=$("aiText").value.trim();
+  const err=$("aiErr");err.classList.add("hidden");
+  if(!key){err.textContent="Masukkan API key Anthropic Anda dulu.";err.classList.remove("hidden");return;}
+  if(!text){err.textContent="Ketik dulu data keuangannya.";err.classList.remove("hidden");return;}
+  const btn=$("parseAI");const old=btn.textContent;btn.textContent="Memproses…";btn.disabled=true;
+  const sys=`Kamu adalah asisten keuangan. User memberikan data pendapatan dan pengeluaran bisnis dalam bahasa Indonesia bebas. Tugasmu HANYA mengekstrak data ke format JSON berikut, tanpa tambahan teks apapun:\n\n{"months":[{"month":"Januari 2026","income":45000000,"expense":38000000}], "current_cash": null}\n\nAturan:\n- Konversi "jt"/"juta" ke angka penuh (45jt -> 45000000)\n- Konversi "rb"/"ribu" ke angka penuh (500rb -> 500000)\n- "M"/"miliar" -> kalikan 1000000000\n- Jika user menyebut "sisa kas" atau "saldo", masukkan ke current_cash\n- Jika tidak disebutkan, current_cash = null\n- Urutkan bulan secara kronologis\n- HANYA output JSON, tanpa markdown, tanpa backtick, tanpa penjelasan`;
+  try{
+    let raw=await callClaude(key,sys,text,2000);
+    raw=raw.trim().replace(/^```json/i,"").replace(/^```/,"").replace(/```$/,"").trim();
+    const parsed=JSON.parse(raw);
+    $("histBody").innerHTML="";
+    (parsed.months||[]).forEach(m=>{
+      let mi=0,year=new Date().getFullYear();
+      const lbl=String(m.month||"");
+      MONTHS.forEach((nm,i)=>{if(lbl.toLowerCase().includes(nm.toLowerCase()))mi=i;});
+      const ym=lbl.match(/\d{4}/);if(ym)year=parseInt(ym[0],10);
+      addRow(mi,year,Number(m.income)||0,Number(m.expense)||0);
+    });
+    if(parsed.current_cash!=null)$("currentCash").value=fmtRp(Number(parsed.current_cash)).replace("−","-");
+    $("tabManual").click();
+  }catch(e){
+    err.textContent="Gagal memproses: "+e.message+". Coba lagi atau gunakan input manual.";
+    err.classList.remove("hidden");
+  }finally{btn.textContent=old;btn.disabled=false;}
+};
+
+/* ---------- core projection ---------- */
+function buildProjection(hist,currentCash){
+  const incomes=hist.map(h=>h.income);
+  const expenses=hist.map(h=>h.expense);
+  const avgInc=incomes.reduce((a,b)=>a+b,0)/incomes.length;
+  const avgExp=expenses.reduce((a,b)=>a+b,0)/expenses.length;
+  const regInc=linearRegression(incomes);
+  const regExp=linearRegression(expenses);
+  const netHist=hist.map(h=>h.income-h.expense);
+  const sd=stddev(netHist);
+
+  // seasonal index (only if >=12 months)
+  let seasonal=new Array(12).fill(1);
+  if(hist.length>=12){
+    const byMonth={};
+    hist.forEach(h=>{(byMonth[h.monthIdx]=byMonth[h.monthIdx]||[]).push(h.income);});
+    for(let mi=0;mi<12;mi++){
+      if(byMonth[mi]){
+        const m=byMonth[mi].reduce((a,b)=>a+b,0)/byMonth[mi].length;
+        seasonal[mi]=avgInc>0?m/avgInc:1;
+      }
+    }
+  }
+
+  const last=hist[hist.length-1];
+  const months=[];
+  for(let n=1;n<=12;n++){
+    const fwd=(last.monthIdx+n)%12;
+    const yr=last.year+Math.floor((last.monthIdx+n)/12);
+    const si=hist.length>=12?seasonal[fwd]:1;
+    const pInc=Math.max(0,(avgInc+regInc.slope*(incomes.length-1+n))*si);
+    const pExp=Math.max(0,(avgExp+regExp.slope*(expenses.length-1+n)));
+    months.push({label:MONTHS[fwd].slice(0,3)+" "+String(yr).slice(2),fullLabel:MONTHS[fwd]+" "+yr,monthIdx:fwd,year:yr,income:pInc,expense:pExp});
+  }
+  return {months,currentCash,avgInc,avgExp,regInc,regExp,sd,histLen:hist.length};
+}
+
+/* apply simulator + compute cash path */
+function computePath(proj,sim){
+  const revMul=1+sim.rev/100, expMul=1+sim.exp/100;
+  const lateMonths=sim.late/30; // fraction of a month delayed
+  let cash=proj.currentCash+sim.inj;
+  const rows=[];
+  for(let i=0;i<12;i++){
+    const m=proj.months[i];
+    let inc=m.income*revMul;
+    // late payment: shift a fraction of this month's income to next; pull none in first month
+    const delayed=inc*Math.min(1,lateMonths);
+    let effInc=inc-delayed+(rows.length?rows[i-1]._carry:0);
+    const exp=m.expense*expMul;
+    const net=effInc-exp;
+    cash+=net;
+    const upper=cash+proj.sd*revMul*Math.sqrt(i+1);
+    const lower=cash-proj.sd*revMul*Math.sqrt(i+1);
+    rows.push({...m,income:effInc,expense:exp,net,cash,upper,lower,_carry:delayed});
+  }
+  return rows;
+}
+
+/* ---------- render ---------- */
+function metric(label,val,cls,sub){return `<div class="metric"><div class="mlabel">${label}</div><div class="mval ${cls||''}">${val}</div>${sub?`<div class="msub">${sub}</div>`:''}</div>`;}
+
+function renderAll(){
+  const sim={
+    rev:parseInt($("slRev").value,10),
+    exp:parseInt($("slExp").value,10),
+    late:parseInt($("slLate").value,10),
+    inj:parseNum($("slInj").value)
+  };
+  const rows=computePath(baseProjection,sim);
+
+  // metrics
+  const netHistAvg=baseProjection.avgInc-baseProjection.avgExp;
+  const burnSurplus=netHistAvg;
+  // runway
+  let critical=null;
+  for(const r of rows){if(r.cash<=0){critical=r.fullLabel;break;}}
+  // income trend %
+  const trendPct=baseProjection.avgInc>0?(baseProjection.regInc.slope/baseProjection.avgInc*100):0;
+  // avg margin
+  const projMargin=rows.reduce((a,r)=>a+(r.income>0?(r.income-r.expense)/r.income*100:0),0)/rows.length;
+
+  const g=$("metricGrid");g.innerHTML="";
+  if(burnSurplus>=0){
+    g.innerHTML+=metric("Surplus Bulanan",fmtRp(burnSurplus),"pos","Rata-rata arus kas positif");
+  }else{
+    g.innerHTML+=metric("Burn Rate Bulanan",fmtRp(Math.abs(burnSurplus)),"neg","Rata-rata kas tergerus / bulan");
+  }
+  g.innerHTML+= critical
+    ? metric("Runway","Kas habis","neg",critical)
+    : metric("Runway","Kas aman 12+ bln","pos","Tidak menyentuh nol dalam proyeksi");
+  g.innerHTML+=metric("Tren Pendapatan",(trendPct>=0?"+":"")+trendPct.toFixed(1)+"% / bln",trendPct>=0?"pos":"neg","Berdasarkan regresi linear");
+  g.innerHTML+=metric("Margin Operasi",projMargin.toFixed(1)+"%",projMargin>=0?"blue":"neg","Rata-rata proyeksi 12 bln");
+
+  drawChart(rows);
+
+  // table
+  const tb=$("projBody");tb.innerHTML="";
+  rows.forEach(r=>{
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td>${r.fullLabel}</td><td class="num">${fmtRp(r.income)}</td><td class="num">${fmtRp(r.expense)}</td><td class="num ${r.net>=0?'pos':'neg'}">${fmtRp(r.net)}</td><td class="num ${r.cash>=0?'pos':'neg'}">${fmtRp(r.cash)}</td>`;
+    tb.appendChild(tr);
+  });
+}
+
+function drawChart(rows){
+  const svg=$("chart");
+  const W=720,H=320,pad={l:64,r:16,t:18,b:40};
+  const xs=i=>pad.l+(W-pad.l-pad.r)*(i/(rows.length-1));
+  const all=[...rows.map(r=>r.cash),...rows.map(r=>r.upper),...rows.map(r=>r.lower),0,baseProjection.currentCash];
+  let min=Math.min(...all),max=Math.max(...all);
+  if(min===max){min-=1;max+=1;}
+  const padV=(max-min)*0.08;min-=padV;max+=padV;
+  const ys=v=>pad.t+(H-pad.t-pad.b)*(1-(v-min)/(max-min));
+
+  const linePath=key=>rows.map((r,i)=>`${i===0?'M':'L'}${xs(i).toFixed(1)} ${ys(r[key]).toFixed(1)}`).join(" ");
+  const bandPath=()=>{
+    const up=rows.map((r,i)=>`${i===0?'M':'L'}${xs(i).toFixed(1)} ${ys(r.upper).toFixed(1)}`).join(" ");
+    const down=rows.slice().reverse().map((r,i)=>`L${xs(rows.length-1-i).toFixed(1)} ${ys(r.lower).toFixed(1)}`).join(" ");
+    return up+" "+down+" Z";
+  };
+
+  // gridlines + y labels (4)
+  let grid="";
+  for(let k=0;k<=4;k++){
+    const v=min+(max-min)*k/4;const y=ys(v);
+    grid+=`<line x1="${pad.l}" y1="${y}" x2="${W-pad.r}" y2="${y}" stroke="#1E293B" stroke-width="1"/>`;
+    grid+=`<text x="${pad.l-8}" y="${y+4}" fill="#64748B" font-size="10" text-anchor="end" font-family="DM Mono">${shortRp(v)}</text>`;
+  }
+  // zero line
+  let zero="";
+  if(min<0&&max>0){const y=ys(0);zero=`<line x1="${pad.l}" y1="${y}" x2="${W-pad.r}" y2="${y}" stroke="#EF4444" stroke-width="1.5" stroke-dasharray="5 4"/>`;}
+  // x labels
+  let xlab="";
+  rows.forEach((r,i)=>{if(i%2===0||i===rows.length-1){xlab+=`<text x="${xs(i)}" y="${H-18}" fill="#64748B" font-size="10" text-anchor="middle" font-family="DM Mono">${r.label}</text>`;}});
+  // points
+  let pts="";
+  let firstNeg=rows.findIndex(r=>r.cash<0);
+  rows.forEach((r,i)=>{
+    const neg=i===firstNeg;
+    pts+=`<circle class="pt ${neg?'blink':''}" data-i="${i}" cx="${xs(i)}" cy="${ys(r.cash)}" r="${neg?5:3.5}" fill="${r.cash>=0?'#3B82F6':'#EF4444'}" stroke="#0B1120" stroke-width="1.5" style="cursor:pointer"/>`;
+  });
+
+  svg.innerHTML=`${grid}
+    <path d="${bandPath()}" fill="#3B82F6" opacity="0.10"/>
+    ${zero}
+    <path d="${linePath('cash')}" fill="none" stroke="#3B82F6" stroke-width="2.5" stroke-linejoin="round"/>
+    ${pts}${xlab}`;
+
+  // tooltips
+  const tip=$("tooltip");
+  svg.querySelectorAll(".pt").forEach(c=>{
+    c.addEventListener("mouseenter",e=>{
+      const r=rows[+c.dataset.i];
+      tip.innerHTML=`${r.fullLabel}<br>Kas: ${fmtRp(r.cash)}`;
+      tip.style.opacity="1";
+    });
+    c.addEventListener("mousemove",e=>{tip.style.left=(e.clientX+12)+"px";tip.style.top=(e.clientY-10)+"px";});
+    c.addEventListener("mouseleave",()=>{tip.style.opacity="0";});
+    c.addEventListener("touchstart",e=>{const r=rows[+c.dataset.i];tip.innerHTML=`${r.fullLabel}<br>Kas: ${fmtRp(r.cash)}`;const t=e.touches[0];tip.style.left=(t.clientX+12)+"px";tip.style.top=(t.clientY-10)+"px";tip.style.opacity="1";setTimeout(()=>tip.style.opacity="0",1800);});
+  });
+}
+function shortRp(v){
+  const a=Math.abs(v);const s=v<0?"-":"";
+  if(a>=1e9)return s+(v/1e9).toFixed(1).replace(/\.0$/,"")+"M";
+  if(a>=1e6)return s+(v/1e6).toFixed(0)+"jt";
+  if(a>=1e3)return s+(v/1e3).toFixed(0)+"rb";
+  return String(Math.round(v));
+}
+
+/* ---------- calc trigger ---------- */
+$("calcBtn").onclick=()=>{
+  const err=$("calcErr");err.classList.add("hidden");
+  const hist=readManual();
+  if(hist.length<3){err.textContent="Minimal 3 bulan data diperlukan (isi pendapatan & pengeluaran).";err.classList.remove("hidden");return;}
+  // sort chronologically
+  hist.sort((a,b)=>(a.year-b.year)||(a.monthIdx-b.monthIdx));
+  const currentCash=parseNum($("currentCash").value);
+  baseProjection=buildProjection(hist,currentCash);
+  $("dashboard").classList.remove("hidden");
+  // reset sliders
+  $("slRev").value=0;$("slExp").value=0;$("slLate").value=0;$("slInj").value="";
+  $("lblRev").textContent="0%";$("lblExp").textContent="0%";$("lblLate").textContent="0 hari";$("lblInj").textContent="Rp 0";
+  renderAll();
+  $("dashboard").scrollIntoView({behavior:"smooth"});
+};
+
+/* ---------- sliders ---------- */
+$("slRev").oninput=e=>{const v=+e.target.value;$("lblRev").textContent=(v>0?"+":"")+v+"%";renderAll();};
+$("slExp").oninput=e=>{const v=+e.target.value;$("lblExp").textContent=(v>0?"+":"")+v+"%";renderAll();};
+$("slLate").oninput=e=>{$("lblLate").textContent=e.target.value+" hari";renderAll();};
+$("slInj").addEventListener("input",()=>{const v=parseNum($("slInj").value);$("slInj").value=v?fmtRp(v).replace("−","-"):"";$("lblInj").textContent=fmtRp(v);renderAll();});
+$("resetSliders").onclick=()=>{$("slRev").value=0;$("slExp").value=0;$("slLate").value=0;$("slInj").value="";$("lblRev").textContent="0%";$("lblExp").textContent="0%";$("lblLate").textContent="0 hari";$("lblInj").textContent="Rp 0";renderAll();};
+
+/* ---------- export image ---------- */
+$("exportImg").onclick=()=>{
+  const svg=$("chart");
+  const xml=new XMLSerializer().serializeToString(svg);
+  const svg64=btoa(unescape(encodeURIComponent('<?xml version="1.0"?>'+xml)));
+  const img=new Image();
+  img.onload=()=>{
+    const c=document.createElement("canvas");c.width=720*2;c.height=320*2;
+    const ctx=c.getContext("2d");ctx.fillStyle="#0B1120";ctx.fillRect(0,0,c.width,c.height);
+    ctx.scale(2,2);ctx.drawImage(img,0,0,720,320);
+    const a=document.createElement("a");a.download="cash-flow-oracle.png";a.href=c.toDataURL("image/png");a.click();
+  };
+  img.onerror=()=>alert("Gagal mengekspor grafik.");
+  img.src="data:image/svg+xml;base64,"+svg64;
+};
+</script>
+</body>
+</html>

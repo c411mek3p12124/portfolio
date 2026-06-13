@@ -1,0 +1,10 @@
+node_modules/
+.next/
+remove_green.py
+.env.local
+.env*.local
+.vercel
+tsconfig.tsbuildinfo
+public/sequences.json
+
+.vercel

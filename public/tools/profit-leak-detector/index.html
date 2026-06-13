@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Profit Leak Detector — Temukan Kebocoran Profit Bisnismu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#0C0A09; --panel:#1C1917; --border:#292524;
+    --text:#F5F5F4; --muted:#78716C;
+    --red:#EF4444; --green:#22C55E; --amber:#F59E0B;
+    --hl-bg:#FEE2E2; --hl-tx:#DC2626;
+    --radius:12px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased}
+  .num{font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums}
+  .wrap{max-width:1000px;margin:0 auto;padding:24px 16px 80px}
+  header.top h1{font-size:26px;font-weight:700;letter-spacing:-.02em}
+  header.top .tag{color:var(--muted);font-size:15px;margin-top:6px}
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:20px}
+  .panel + .panel{margin-top:16px}
+  h2{font-size:17px;font-weight:600;margin-bottom:4px}
+  h2 .sub{display:block;font-size:13px;color:var(--muted);font-weight:400;margin-top:4px}
+  label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+  input,select{width:100%;background:#0C0A09;border:1px solid var(--border);color:var(--text);border-radius:8px;padding:10px 12px;font-size:14px;font-family:inherit;outline:none}
+  input:focus,select:focus{border-color:var(--amber)}
+  input.num{font-family:'JetBrains Mono',monospace}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:none;border-radius:8px;padding:11px 18px;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;transition:filter .15s}
+  .btn:hover{filter:brightness(1.1)}
+  .btn-red{background:var(--red);color:#fff;width:100%;font-weight:700}
+  .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text)}
+  .btn-sm{padding:7px 12px;font-size:13px}
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+  .product-card,.exp-row{background:#0C0A09;border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px}
+  .pc-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr auto;gap:10px;align-items:end}
+  .exp-grid{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:10px;align-items:end}
+  .pc-stats{display:flex;gap:14px;margin-top:10px;font-size:12px;flex-wrap:wrap}
+  .pc-stats span{font-family:'JetBrains Mono',monospace}
+  .badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:99px;font-weight:600}
+  .badge.g{background:rgba(34,197,94,.15);color:var(--green)}
+  .badge.a{background:rgba(245,158,11,.15);color:var(--amber)}
+  .badge.r{background:rgba(239,68,68,.15);color:var(--red)}
+  .icon-btn{background:#0C0A09;border:1px solid var(--border);color:var(--muted);border-radius:8px;width:38px;height:38px;cursor:pointer;font-size:18px}
+  .icon-btn:hover{color:var(--red);border-color:var(--red)}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .field{margin-bottom:14px}
+  .hidden{display:none}
+  /* dashboard */
+  .hero{background:linear-gradient(135deg,#3b0d0d,#1c0808);border:1px solid #5b1a1a;border-radius:var(--radius);padding:28px;text-align:center}
+  .hero .lead{color:#fca5a5;font-size:15px}
+  .hero .big{font-size:40px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#fff;margin:8px 0}
+  .hero .sub{color:#fca5a5;font-size:14px}
+  @keyframes pulse{0%,100%{transform:scale(1);text-shadow:0 0 0 rgba(239,68,68,0)}50%{transform:scale(1.04);text-shadow:0 0 24px rgba(239,68,68,.5)}}
+  .pulse{animation:pulse 1.4s ease-in-out 3}
+  .leak-card{margin-top:14px}
+  .leak-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+  .leak-title{font-size:16px;font-weight:600}
+  .leak-amt{font-family:'JetBrains Mono',monospace;font-weight:700}
+  .findings{list-style:none;margin-top:12px;display:flex;flex-direction:column;gap:10px}
+  .findings li{background:#0C0A09;border:1px solid var(--border);border-left:3px solid var(--red);border-radius:8px;padding:10px 12px;font-size:13px}
+  .findings li.clean{border-left-color:var(--green)}
+  .findings .action{color:var(--muted);font-size:12px;margin-top:4px}
+  .findings .money{background:var(--hl-bg);color:var(--hl-tx);font-family:'JetBrains Mono',monospace;font-weight:700;padding:0 5px;border-radius:4px}
+  .progress{height:6px;background:#0C0A09;border-radius:3px;margin-top:12px;overflow:hidden}
+  .progress > div{height:100%;background:var(--red);border-radius:3px;transition:width .6s}
+  .priority{list-style:none;counter-reset:p;margin-top:8px;display:flex;flex-direction:column;gap:10px}
+  .priority li{counter-increment:p;background:#0C0A09;border:1px solid var(--border);border-radius:8px;padding:12px 12px 12px 44px;position:relative;font-size:14px}
+  .priority li::before{content:counter(p);position:absolute;left:12px;top:12px;width:22px;height:22px;background:var(--amber);color:#0C0A09;font-weight:700;font-size:13px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+  .ai-box{margin-top:14px;border-top:1px dashed var(--border);padding-top:14px}
+  .ai-key-row{display:flex;gap:8px;margin-top:8px}
+  .ai-key-row input{flex:1}
+  .ai-result{margin-top:12px;background:#0C0A09;border:1px solid var(--border);border-radius:8px;padding:14px;font-size:14px;line-height:1.7;white-space:pre-wrap}
+  .pill{display:inline-block;font-size:11px;padding:2px 8px;border-radius:99px;background:#0C0A09;border:1px solid var(--border);color:var(--muted)}
+  .err{color:var(--red);font-size:13px;margin-top:8px}
+  .accordion{border:1px solid var(--border);border-radius:8px;margin-top:8px}
+  .accordion summary{cursor:pointer;padding:12px 14px;font-size:14px;font-weight:500;list-style:none}
+  .accordion summary::-webkit-details-marker{display:none}
+  .accordion[open] summary{border-bottom:1px solid var(--border)}
+  .accordion .acc-body{padding:14px;font-size:13px;color:var(--muted);line-height:1.7}
+  .disclaimer{font-size:12px;color:var(--muted);background:#0C0A09;border:1px solid var(--border);border-radius:8px;padding:12px;margin-top:16px}
+  footer{text-align:center;color:var(--muted);font-size:13px;margin-top:32px}
+  @media(max-width:640px){
+    .pc-grid,.exp-grid,.grid3,.grid2{grid-template-columns:1fr}
+    .hero .big{font-size:30px}
+    header.top h1{font-size:22px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>Profit Leak Detector</h1>
+    <div class="tag">Temukan uang yang sedang bocor dari bisnismu — sebelum semuanya habis.</div>
+  </header>
+
+  <div class="toolbar" style="margin-top:20px">
+    <button class="btn btn-ghost btn-sm" id="loadSample" type="button">Muat Contoh</button>
+    <button class="btn btn-ghost btn-sm hidden" id="rescan" type="button">↑ Scan Ulang</button>
+  </div>
+
+  <section id="inputSection">
+    <!-- Panel A -->
+    <div class="panel">
+      <h2>Produk / Jasa<span class="sub">Minimal 1 produk. Margin dihitung otomatis.</span></h2>
+      <div id="products"></div>
+      <button class="btn btn-ghost btn-sm" id="addProduct" type="button">+ Tambah Produk</button>
+    </div>
+
+    <!-- Panel B -->
+    <div class="panel">
+      <h2>Pengeluaran Rutin<span class="sub">Minimal 1. Tandai mana yang opsional.</span></h2>
+      <div id="expenses"></div>
+      <button class="btn btn-ghost btn-sm" id="addExpense" type="button">+ Tambah Pengeluaran</button>
+    </div>
+
+    <!-- Panel C -->
+    <div class="panel">
+      <h2>Syarat Pembayaran<span class="sub">Opsional — meningkatkan akurasi analisis arus kas.</span></h2>
+      <div class="grid3">
+        <div class="field"><label>Pelanggan bayar Anda (hari)</label><input type="number" id="dso" value="0" min="0" max="90"/></div>
+        <div class="field"><label>Anda bayar supplier (hari)</label><input type="number" id="dpo" value="0" min="0" max="90"/></div>
+        <div class="field"><label>Stok tersimpan (hari)</label><input type="number" id="dio" value="0" min="0" max="180"/></div>
+      </div>
+    </div>
+
+    <!-- Panel D -->
+    <div class="panel">
+      <h2>Info Tambahan</h2>
+      <div class="grid3">
+        <div class="field"><label>Omzet total / bulan (cross-check)</label><input type="text" inputmode="numeric" class="num" id="omzet" placeholder="Rp 0"/></div>
+        <div class="field"><label>Punya NPWP?</label><select id="npwp"><option value="ya">Ya</option><option value="tidak">Tidak</option></select></div>
+        <div class="field"><label>Sudah pakai fasilitas bebas PPh Rp500jt?</label><select id="fasilitas"><option value="tidak">Tidak</option><option value="ya">Ya</option><option value="tidaktahu">Tidak tahu</option></select></div>
+      </div>
+    </div>
+
+    <button class="btn btn-red" id="detectBtn" type="button">Deteksi Kebocoran</button>
+    <div class="err hidden" id="detectErr"></div>
+  </section>
+
+  <!-- DASHBOARD -->
+  <section id="dashboard" class="hidden" style="margin-top:16px">
+    <div class="hero">
+      <div class="lead">Bisnis Anda kehilangan sekitar</div>
+      <div class="big pulse" id="totalLeak">Rp 0</div>
+      <div class="sub" id="leakCount">dari 0 kebocoran yang terdeteksi</div>
+    </div>
+
+    <div id="leakCards"></div>
+
+    <div class="panel" style="margin-top:16px">
+      <h2>Aksi Prioritas</h2>
+      <ol class="priority" id="priorityList"></ol>
+    </div>
+
+    <div class="panel">
+      <h2>Analisis AI<span class="sub">Opsional — narasi konsultan dari temuan di atas.</span></h2>
+      <div class="ai-box">
+        <span class="pill">AI opsional</span>
+        <label style="margin-top:8px">Tempel API Key Anthropic Anda sendiri (sk-ant-…). Tidak disimpan.</label>
+        <div class="ai-key-row">
+          <input type="password" id="apiKey" placeholder="sk-ant-..." autocomplete="off"/>
+          <button class="btn btn-red" id="aiBtn" type="button" style="width:auto">Buat Narasi AI</button>
+        </div>
+        <div class="err hidden" id="aiErr"></div>
+        <div class="ai-result hidden" id="aiResult"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <details class="accordion">
+        <summary>Metodologi Deteksi</summary>
+        <div class="acc-body">
+          <b>Pricing Leak:</b> produk dengan margin &lt;15% (atau jual rugi) ditandai; potensi tambahan = (target 15% − margin aktual) × volume.<br>
+          <b>Cost Leak:</b> seluruh pengeluaran "Opsional" + pengeluaran yang &gt;15% dari pendapatan.<br>
+          <b>Cash Gap Leak:</b> Cash Conversion Cycle = DSO + DIO − DPO; kas terjebak = pendapatan harian × CCC; biaya peluang 6%/tahun.<br>
+          <b>Product Dead Weight:</b> produk kontribusi &lt;5% dan margin &lt;20%; opportunity cost = HPP × volume × 10%.<br>
+          <b>Tax Leak:</b> berbasis status NPWP & fasilitas bebas PPh Final 0,5% untuk omzet ≤ Rp500jt.
+        </div>
+      </details>
+      <div class="disclaimer">
+        Analisis ini berdasarkan data yang Anda masukkan dan menggunakan benchmark umum. Untuk analisis
+        mendalam, konsultasikan dengan akuntan atau konsultan keuangan.
+      </div>
+    </div>
+  </section>
+
+  <footer>Dibuat untuk melindungi profit UMKM Indonesia</footer>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const fmtRp=n=>{const v=Math.round(n);return (v<0?"−Rp ":"Rp ")+Math.abs(v).toLocaleString("id-ID");};
+const fmtPct=n=>n.toFixed(1).replace(".",",")+"%";
+const parseNum=s=>{const d=String(s).replace(/[^\d]/g,"");return d?parseInt(d,10):0;};
+function bindRupiah(el){el.addEventListener("input",()=>{const v=parseNum(el.value);el.value=v?fmtRp(v).replace("−","-"):"";});}
+
+/* ---------- product cards ---------- */
+function addProduct(p={}){
+  const wrap=$("products");
+  const div=document.createElement("div");
+  div.className="product-card";
+  div.innerHTML=`
+    <div class="pc-grid">
+      <div><label>Nama produk</label><input class="p-name" value="${p.nama||''}" placeholder="Nama"/></div>
+      <div><label>Harga jual/unit</label><input class="p-price num" inputmode="numeric" placeholder="Rp 0"/></div>
+      <div><label>HPP/unit</label><input class="p-hpp num" inputmode="numeric" placeholder="Rp 0"/></div>
+      <div><label>Volume/bln</label><input class="p-vol num" inputmode="numeric" value="${p.volume||''}" placeholder="0"/></div>
+      <div><button class="icon-btn p-del" title="Hapus">×</button></div>
+    </div>
+    <div class="pc-stats">
+      <span>Margin/unit: <b class="p-mu">Rp 0</b></span>
+      <span>Margin %: <b class="p-mp">0%</b> <span class="badge g p-badge">sehat</span></span>
+      <span>Kontribusi/bln: <b class="p-kontrib">Rp 0</b></span>
+    </div>`;
+  wrap.appendChild(div);
+  const price=div.querySelector(".p-price"),hpp=div.querySelector(".p-hpp"),vol=div.querySelector(".p-vol");
+  if(p.harga)price.value=fmtRp(p.harga).replace("−","-");
+  if(p.hpp)hpp.value=fmtRp(p.hpp).replace("−","-");
+  bindRupiah(price);bindRupiah(hpp);
+  const recalc=()=>{
+    const h=parseNum(price.value),c=parseNum(hpp.value),v=parseNum(vol.value);
+    const mu=h-c;const mp=h>0?(mu/h*100):0;
+    div.querySelector(".p-mu").textContent=fmtRp(mu);
+    div.querySelector(".p-mp").textContent=fmtPct(mp);
+    div.querySelector(".p-kontrib").textContent=fmtRp(mu*v);
+    const b=div.querySelector(".p-badge");
+    if(mp>=30){b.className="badge g p-badge";b.textContent="sehat";}
+    else if(mp>=10){b.className="badge a p-badge";b.textContent="waspada";}
+    else{b.className="badge r p-badge";b.textContent=mp<0?"jual rugi":"kritis";}
+  };
+  [price,hpp,vol].forEach(el=>el.addEventListener("input",recalc));
+  div.querySelector(".p-del").onclick=()=>div.remove();
+  recalc();
+}
+
+/* ---------- expense rows ---------- */
+function addExpense(e={}){
+  const wrap=$("expenses");
+  const div=document.createElement("div");
+  div.className="exp-row";
+  div.innerHTML=`
+    <div class="exp-grid">
+      <div><label>Nama pengeluaran</label><input class="e-name" value="${e.nama||''}" placeholder="Sewa / Gaji / Listrik"/></div>
+      <div><label>Jumlah/bln</label><input class="e-amt num" inputmode="numeric" placeholder="Rp 0"/></div>
+      <div><label>Kategori</label><select class="e-cat">
+        <option value="Tetap">Tetap</option><option value="Variabel">Variabel</option><option value="Opsional">Opsional</option>
+      </select></div>
+      <div><button class="icon-btn e-del" title="Hapus">×</button></div>
+    </div>`;
+  wrap.appendChild(div);
+  const amt=div.querySelector(".e-amt");
+  if(e.jumlah)amt.value=fmtRp(e.jumlah).replace("−","-");
+  if(e.kategori)div.querySelector(".e-cat").value=e.kategori;
+  bindRupiah(amt);
+  div.querySelector(".e-del").onclick=()=>div.remove();
+}
+
+$("addProduct").onclick=()=>addProduct();
+$("addExpense").onclick=()=>addExpense();
+addProduct();addExpense();
+bindRupiah($("omzet"));
+
+/* ---------- sample ---------- */
+$("loadSample").onclick=()=>{
+  $("products").innerHTML="";$("expenses").innerHTML="";
+  [{nama:"Nasi Goreng Spesial",harga:25000,hpp:12000,volume:800},
+   {nama:"Es Teh Manis",harga:5000,hpp:1500,volume:1200},
+   {nama:"Paket Keluarga",harga:75000,hpp:68000,volume:50},
+   {nama:"Kerupuk",harga:3000,hpp:2800,volume:400}].forEach(addProduct);
+  [{nama:"Sewa tempat",jumlah:5000000,kategori:"Tetap"},
+   {nama:"Gaji 2 karyawan",jumlah:7000000,kategori:"Tetap"},
+   {nama:"Listrik & air",jumlah:1500000,kategori:"Tetap"},
+   {nama:"Bahan baku tambahan",jumlah:3000000,kategori:"Variabel"},
+   {nama:"Langganan Spotify bisnis",jumlah:150000,kategori:"Opsional"},
+   {nama:"Instagram Ads",jumlah:2000000,kategori:"Opsional"}].forEach(addExpense);
+  $("dso").value=14;$("dpo").value=0;$("dio").value=7;
+  $("omzet").value=fmtRp(30000000).replace("−","-");
+  $("npwp").value="ya";$("fasilitas").value="tidak";
+};
+
+/* ---------- read inputs ---------- */
+function readProducts(){
+  return [...$("products").children].map(d=>({
+    nama:d.querySelector(".p-name").value||"Produk",
+    harga:parseNum(d.querySelector(".p-price").value),
+    hpp:parseNum(d.querySelector(".p-hpp").value),
+    volume:parseNum(d.querySelector(".p-vol").value)
+  })).filter(p=>p.harga>0&&p.volume>0);
+}
+function readExpenses(){
+  return [...$("expenses").children].map(d=>({
+    nama:d.querySelector(".e-name").value||"Pengeluaran",
+    jumlah:parseNum(d.querySelector(".e-amt").value),
+    kategori:d.querySelector(".e-cat").value
+  })).filter(e=>e.jumlah>0);
+}
+
+/* ---------- analysis ---------- */
+let lastAnalysis=null;
+function analyze(){
+  const products=readProducts();
+  const expenses=readExpenses();
+  const dso=+$("dso").value||0,dpo=+$("dpo").value||0,dio=+$("dio").value||0;
+  const npwp=$("npwp").value, fasilitas=$("fasilitas").value;
+
+  const total_revenue=products.reduce((a,p)=>a+p.harga*p.volume,0);
+  const total_expense=expenses.reduce((a,e)=>a+e.jumlah,0);
+  const total_contribution=products.reduce((a,p)=>a+(p.harga-p.hpp)*p.volume,0)||1;
+
+  const leaks=[];
+
+  /* LEAK 1: Pricing */
+  let l1=0;const f1=[];
+  products.map(p=>({...p,margin:p.harga-p.hpp,mp:p.harga>0?(p.harga-p.hpp)/p.harga*100:0}))
+    .sort((a,b)=>a.mp-b.mp)
+    .forEach(p=>{
+      if(p.mp<0){
+        const amt=Math.abs(p.margin)*p.volume;l1+=amt;
+        f1.push({txt:`${p.nama}: JUAL RUGI — margin ${fmtPct(p.mp)}.`,money:amt,action:`Anda kehilangan ${fmtRp(Math.abs(p.margin))} setiap kali menjual ${p.nama}. Naikkan harga atau stop.`});
+      }else if(p.mp<15){
+        const targetMargin=p.harga*0.15;const gap=targetMargin-p.margin;const amt=gap*p.volume;l1+=Math.max(0,amt);
+        f1.push({txt:`${p.nama}: margin tipis ${fmtPct(p.mp)}.`,money:Math.max(0,amt),action:`Naikkan harga ~${fmtRp(gap)}/unit untuk capai margin 15% → tambahan ${fmtRp(Math.max(0,amt))}/bln.`});
+      }
+    });
+  leaks.push({key:"pricing",icon:"💰",name:"Kebocoran Harga",amount:l1,findings:f1});
+
+  /* LEAK 2: Cost */
+  let l2=0;const f2=[];
+  expenses.forEach(e=>{
+    if(e.kategori==="Opsional"){l2+=e.jumlah;f2.push({txt:`${e.nama}: pengeluaran opsional ${fmtRp(e.jumlah)}/bln.`,money:e.jumlah,action:`Evaluasi apakah ${e.nama} benar-benar menghasilkan ROI.`});}
+  });
+  expenses.forEach(e=>{
+    const pct=total_revenue>0?e.jumlah/total_revenue*100:0;
+    if(pct>15&&e.kategori!=="Opsional"){
+      const over=e.jumlah-total_revenue*0.15;l2+=Math.max(0,over);
+      f2.push({txt:`${e.nama}: menghabiskan ${fmtPct(pct)} dari pendapatan.`,money:Math.max(0,over),action:`Pengeluaran dominan — turunkan ke ≤15% pendapatan untuk hemat ~${fmtRp(Math.max(0,over))}/bln.`});
+    }
+  });
+  leaks.push({key:"cost",icon:"🧾",name:"Kebocoran Biaya",amount:l2,findings:f2});
+
+  /* LEAK 3: Cash Gap */
+  let l3=0;const f3=[];
+  const ccc=dso+dio-dpo;
+  if(ccc>0&&total_revenue>0){
+    const daily=total_revenue/30;const trapped=daily*ccc;
+    const annualOpp=trapped*0.06;l3=annualOpp/12;
+    f3.push({txt:`${fmtRp(trapped)} terjebak dalam siklus kas selama ${ccc} hari.`,money:l3,action:`Biaya peluang ~${fmtRp(l3)}/bln. Uang ini tak bisa dipakai meski pembukuan untung.`});
+    if(dso>dpo){f3.push({txt:`Jeda penagihan: pelanggan bayar ${dso} hari, Anda bayar supplier ${dpo} hari.`,money:0,action:`Negosiasikan pembayaran supplier ke ${dso} hari, atau percepat penagihan ke ${dpo} hari.`});}
+  }
+  leaks.push({key:"cashgap",icon:"⏳",name:"Kebocoran Arus Kas",amount:l3,findings:f3});
+
+  /* LEAK 4: Dead Weight */
+  let l4=0;const f4=[];
+  const best=products.slice().sort((a,b)=>((b.harga-b.hpp)/b.harga||0)-((a.harga-a.hpp)/a.harga||0))[0];
+  products.forEach(p=>{
+    const margin=p.harga-p.hpp;const mp=p.harga>0?margin/p.harga*100:0;
+    const contribPct=(margin*p.volume)/total_contribution*100;
+    if(contribPct<5&&mp<20){
+      const amt=p.hpp*p.volume*0.1;l4+=amt;
+      f4.push({txt:`${p.nama}: kontribusi hanya ${fmtPct(contribPct)}, margin ${fmtPct(mp)}.`,money:amt,action:`Pertimbangkan hentikan ${p.nama} dan alihkan resource ke ${best?best.nama:"produk margin tertinggi"}.`});
+    }
+  });
+  leaks.push({key:"deadweight",icon:"🪦",name:"Produk Mati",amount:l4,findings:f4});
+
+  /* LEAK 5: Tax */
+  let l5=0;const f5=[];
+  const annual_revenue=total_revenue*12;
+  if(npwp==="ya"&&annual_revenue<=4800000000){
+    if(fasilitas!=="ya"){
+      const saving=Math.min(annual_revenue,500000000)*0.005;l5=saving/12;
+      f5.push({txt:`Belum memanfaatkan fasilitas bebas PPh Rp500jt.`,money:l5,action:`Hemat ~${fmtRp(l5)}/bln dengan memanfaatkan pembebasan PPh Final omzet ≤ Rp500jt (PP 20/2026).`});
+    }
+  }else if(npwp==="tidak"&&annual_revenue>0){
+    const loss=Math.min(annual_revenue,500000000)*0.005/12;l5=loss;
+    f5.push({txt:`Tanpa NPWP, Anda kehilangan akses tarif PPh Final 0,5% & fasilitas bebas pajak Rp500jt.`,money:l5,action:`Daftarkan NPWP untuk akses tarif final & fasilitas bebas pajak. Estimasi nilai ~${fmtRp(loss)}/bln.`});
+  }
+  leaks.push({key:"tax",icon:"📊",name:"Kebocoran Pajak",amount:l5,findings:f5});
+
+  const total=leaks.reduce((a,l)=>a+l.amount,0);
+  const activeCount=leaks.filter(l=>l.amount>0).length;
+  return {leaks,total,activeCount,total_revenue,total_expense,meta:{dso,dpo,dio,ccc,npwp}};
+}
+
+/* ---------- render ---------- */
+function render(a){
+  $("totalLeak").textContent=fmtRp(a.total)+" / bln";
+  $("leakCount").textContent=`dari ${a.activeCount} kebocoran yang terdeteksi`;
+  const tl=$("totalLeak");tl.classList.remove("pulse");void tl.offsetWidth;tl.classList.add("pulse");
+
+  const wrap=$("leakCards");wrap.innerHTML="";
+  a.leaks.forEach(l=>{
+    const div=document.createElement("div");
+    div.className="panel leak-card";
+    const clean=l.amount<=0||l.findings.length===0;
+    const pctOfTotal=a.total>0?(l.amount/a.total*100):0;
+    div.innerHTML=`
+      <div class="leak-head">
+        <div class="leak-title">${l.icon} ${l.name} ${clean?'<span class="badge g">bersih</span>':'<span class="badge r">bocor</span>'}</div>
+        <div class="leak-amt ${clean?'':'money-red'}" style="color:${clean?'var(--green)':'var(--red)'}">${clean?'Rp 0':fmtRp(l.amount)+' / bln'}</div>
+      </div>
+      ${clean
+        ? `<ul class="findings"><li class="clean">✓ Bersih — tidak ada kebocoran terdeteksi</li></ul>`
+        : `<ul class="findings">${l.findings.map(f=>`<li>${f.txt.replace(/Rp [\d.]+/g,m=>`<span class="money">${m}</span>`)}<div class="action">→ ${f.action.replace(/Rp [\d.]+/g,m=>`<span class="money">${m}</span>`)}</div></li>`).join("")}</ul>
+           <div class="progress"><div style="width:${pctOfTotal.toFixed(0)}%"></div></div>`}
+    `;
+    wrap.appendChild(div);
+  });
+
+  // priorities
+  const allFindings=[];
+  a.leaks.forEach(l=>l.findings.forEach(f=>{if(f.money>0)allFindings.push({...f,cat:l.name});}));
+  allFindings.sort((x,y)=>y.money-x.money);
+  const pl=$("priorityList");pl.innerHTML="";
+  allFindings.slice(0,5).forEach(f=>{
+    const li=document.createElement("li");
+    li.innerHTML=`${f.action.replace(/Rp [\d.]+/g,m=>`<b>${m}</b>`)} <span style="color:var(--amber)">→ potensi ${fmtRp(f.money)}/bln</span>`;
+    pl.appendChild(li);
+  });
+  if(allFindings.length===0)pl.innerHTML='<li>✓ Tidak ada kebocoran signifikan terdeteksi. Pertahankan!</li>';
+}
+
+$("detectBtn").onclick=()=>{
+  const err=$("detectErr");err.classList.add("hidden");
+  const products=readProducts(),expenses=readExpenses();
+  if(products.length<1){err.textContent="Tambahkan minimal 1 produk dengan harga & volume.";err.classList.remove("hidden");return;}
+  if(expenses.length<1){err.textContent="Tambahkan minimal 1 pengeluaran rutin.";err.classList.remove("hidden");return;}
+  lastAnalysis=analyze();
+  render(lastAnalysis);
+  $("dashboard").classList.remove("hidden");
+  $("rescan").classList.remove("hidden");
+  $("aiResult").classList.add("hidden");
+  $("dashboard").scrollIntoView({behavior:"smooth"});
+};
+$("rescan").onclick=()=>$("inputSection").scrollIntoView({behavior:"smooth"});
+
+/* ---------- AI narrative ---------- */
+async function callClaude(apiKey,system,user,maxTokens){
+  const res=await fetch("https://api.anthropic.com/v1/messages",{
+    method:"POST",
+    headers:{"content-type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+    body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:maxTokens,system,messages:[{role:"user",content:user}]})
+  });
+  if(!res.ok){let msg="HTTP "+res.status;try{const j=await res.json();if(j.error&&j.error.message)msg=j.error.message;}catch(e){}throw new Error(msg);}
+  const data=await res.json();
+  return (data.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("");
+}
+$("aiBtn").onclick=async()=>{
+  const key=$("apiKey").value.trim();const err=$("aiErr");err.classList.add("hidden");
+  if(!lastAnalysis){err.textContent="Jalankan deteksi dulu.";err.classList.remove("hidden");return;}
+  if(!key){err.textContent="Masukkan API key Anthropic Anda dulu.";err.classList.remove("hidden");return;}
+  const btn=$("aiBtn");const old=btn.textContent;btn.textContent="Memproses…";btn.disabled=true;
+  const sys=`Kamu adalah analis keuangan UMKM Indonesia. Kamu menerima data analisis kebocoran profit sebuah bisnis. Tulis analisis singkat (maksimal 200 kata) dalam bahasa Indonesia yang:\n1. Menyebutkan kebocoran paling kritis dan dampaknya\n2. Memberikan 2-3 langkah perbaikan paling mendesak dengan urutan prioritas\n3. Memberikan satu insight yang mungkin tidak terlihat dari angka saja\n\nGaya bahasa: langsung, tegas, seperti konsultan yang bicara ke pemilik bisnis. Bukan basa-basi. Gunakan angka Rupiah spesifik.\n\nJangan gunakan markdown. Tulis dalam paragraf biasa.`;
+  const summary={
+    total_kebocoran_per_bulan:Math.round(lastAnalysis.total),
+    total_pendapatan_per_bulan:Math.round(lastAnalysis.total_revenue),
+    kebocoran:lastAnalysis.leaks.map(l=>({kategori:l.name,jumlah:Math.round(l.amount),temuan:l.findings.map(f=>f.txt)}))
+  };
+  try{
+    const out=await callClaude(key,sys,JSON.stringify(summary),3000);
+    const r=$("aiResult");r.textContent=out.trim();r.classList.remove("hidden");
+  }catch(e){err.textContent="Gagal: "+e.message;err.classList.remove("hidden");}
+  finally{btn.textContent=old;btn.disabled=false;}
+};
+</script>
+</body>
+</html>
