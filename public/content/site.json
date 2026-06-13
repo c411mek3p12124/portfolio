@@ -617,6 +617,9 @@
       "arrow": false,
       "radius": "7px",
       "link": "https/wa.me/6282340947268"
+    },
+    "clientsCategory": {
+      "radius": "7px"
     }
   }
 }
