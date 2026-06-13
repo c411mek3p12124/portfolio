@@ -1,11 +1,12 @@
 "use client";
+import type { CSSProperties } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useContentStore } from "./content/ContentProvider";
 import { SocialIcon } from "./content/SocialIcon";
 import { EditableText, EditableLink, AddButton, RemoveButton } from "./content/Editable";
 
 export default function FullscreenMenu({ isOpen, onClose, onBack }: { isOpen: boolean; onClose: () => void; onBack: () => void }) {
-  const { get, editing, addItem, removeItem } = useContentStore();
+  const { get, editing, addItem, removeItem, getStyle } = useContentStore();
   const nav = (get("footer.nav") ?? []) as { label: string; id: string }[];
   const social = (get("social") ?? []) as { label: string; url: string }[];
   const email = get("brand.email");
@@ -23,7 +24,7 @@ export default function FullscreenMenu({ isOpen, onClose, onBack }: { isOpen: bo
                   <span className="font-light text-sm mr-3" style={{ color: "var(--text-muted)" }}>0{i + 1}</span>
                   {editing
                     ? <EditableText path={`footer.nav.${i}.label`} as="span" className="menu-link" />
-                    : <a href={`#${l.id}`} className="menu-link" onClick={onClose}>{l.label}</a>}
+                    : <a href={`#${l.id}`} className="menu-link" style={getStyle(`footer.nav.${i}.label`) as CSSProperties} onClick={onClose}>{l.label}</a>}
                 </motion.div>
               ))}
               {!editing && (

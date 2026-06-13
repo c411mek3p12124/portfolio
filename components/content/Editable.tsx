@@ -85,7 +85,12 @@ export function EditableImage({
     reader.readAsDataURL(file);
   };
 
-  const imgStyle: React.CSSProperties = { width: st.width, borderRadius: st.borderRadius };
+  // When the operator sets a size (S/M/L), it must WIN over the section's hard-coded
+  // classes (e.g. `w-full h-44 object-cover`): show the image at that width, natural
+  // height, uncropped. With no operator size, keep the section's default look.
+  const imgStyle: React.CSSProperties = st.width
+    ? { width: st.width, height: "auto", objectFit: "contain", borderRadius: st.borderRadius }
+    : { borderRadius: st.borderRadius };
 
   if (!editing) {
     if (!value) return null;
