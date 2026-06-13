@@ -251,6 +251,7 @@ export interface SiteContent {
   theme?: ThemeColors;
   layout?: LayoutBlock[];
   buttons?: Record<string, ButtonStyle>;
+  audio?: { track?: string }; // background music — path to an uploaded mp3 (e.g. /audio/track.mp3)
 }
 
 export const DEFAULT_THEME: ThemeColors = {

@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "motion/react";
 import ThemeProvider from "@/components/ThemeProvider";
 import ContentProvider from "@/components/content/ContentProvider";
 import { LightboxProvider } from "@/components/content/Lightbox";
+import { AudioProvider } from "@/components/AudioPlayer";
 import { ThemeApplier } from "@/components/content/StylePanels";
 import SmoothScroll from "@/components/SmoothScroll";
 import Preloader from "@/components/Preloader";
@@ -30,6 +31,7 @@ export default function Home() {
     <ThemeProvider>
       <ContentProvider>
         <LightboxProvider>
+        <AudioProvider>
         <ThemeApplier />
         {/* ── 01. Preloader ── */}
         <Preloader progress={progress} isComplete={view !== "loading"} />
@@ -80,6 +82,7 @@ export default function Home() {
             <SequenceScroll onProgress={setProgress} onDone={handleLoadDone} />
           </div>
         )}
+        </AudioProvider>
         </LightboxProvider>
       </ContentProvider>
     </ThemeProvider>

@@ -38,10 +38,10 @@ function toBase64(str: string): string {
   return btoa(unescape(encodeURIComponent(str)));
 }
 
-async function getSha(s: GitHubSettings): Promise<string | undefined> {
+async function getShaForPath(s: GitHubSettings, path: string): Promise<string | undefined> {
   // cache-buster + no-store: GitHub's contents GET can be served from the browser
   // cache (ETag/max-age), which returns a STALE sha → 409 "does not match" on save.
-  const url = `https://api.github.com/repos/${s.owner}/${s.repo}/contents/${s.path}?ref=${s.branch}&_=${Date.now()}`;
+  const url = `https://api.github.com/repos/${s.owner}/${s.repo}/contents/${path}?ref=${s.branch}&_=${Date.now()}`;
   const res = await fetch(url, {
     cache: "no-store",
     headers: { Authorization: `Bearer ${s.token}`, Accept: "application/vnd.github+json" },
@@ -50,6 +50,30 @@ async function getSha(s: GitHubSettings): Promise<string | undefined> {
   if (!res.ok) throw new Error(`Could not read file (${res.status}). Check repo/path/token.`);
   const json = await res.json();
   return json.sha as string;
+}
+
+function getSha(s: GitHubSettings): Promise<string | undefined> {
+  return getShaForPath(s, s.path);
+}
+
+/* Commit any binary file (e.g. an uploaded mp3) to the repo at `path`.
+   `base64` must be the raw base64 (no "data:...;base64," prefix). */
+export async function commitBinaryFile(s: GitHubSettings, path: string, base64: string): Promise<string> {
+  if (!s.owner || !s.repo || !s.token) throw new Error("Connect GitHub (add your token) first.");
+  const put = (sha: string | undefined) =>
+    fetch(`https://api.github.com/repos/${s.owner}/${s.repo}/contents/${path}`, {
+      method: "PUT",
+      cache: "no-store",
+      headers: { Authorization: `Bearer ${s.token}`, Accept: "application/vnd.github+json", "Content-Type": "application/json" },
+      body: JSON.stringify({ message: `chore(audio): upload ${path} via operator`, content: base64, branch: s.branch, ...(sha ? { sha } : {}) }),
+    });
+  let res = await put(await getShaForPath(s, path));
+  if (res.status === 409 || res.status === 422) res = await put(await getShaForPath(s, path));
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || `Upload failed (${res.status}).`);
+  }
+  return path;
 }
 
 async function putContent(s: GitHubSettings, content: unknown, sha: string | undefined) {

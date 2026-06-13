@@ -1,16 +1,18 @@
 "use client";
 import { motion } from "motion/react";
 import { useTheme } from "./ThemeProvider";
+import { useAudio } from "./AudioPlayer";
 
 interface HeaderProps {
   onMenuToggle: () => void;
   isMenuOpen: boolean;
-  soundOn: boolean;
-  onToggleSound: () => void;
+  soundOn?: boolean;
+  onToggleSound?: () => void;
 }
 
-export default function Header({ onMenuToggle, isMenuOpen, soundOn, onToggleSound }: HeaderProps) {
+export default function Header({ onMenuToggle, isMenuOpen }: HeaderProps) {
   const { theme, toggle } = useTheme();
+  const audio = useAudio();
 
   return (
     <motion.header
@@ -29,14 +31,16 @@ export default function Header({ onMenuToggle, isMenuOpen, soundOn, onToggleSoun
           )}
         </button>
 
-        {/* Sound toggle */}
-        <button onClick={onToggleSound} className="icon-btn" title={soundOn ? "Mute" : "Unmute"}>
-          {soundOn ? (
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-          ) : (
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M11 5L6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
-          )}
-        </button>
+        {/* Music toggle (plays the uploaded track) */}
+        {audio.hasTrack && (
+          <button onClick={audio.toggle} className="icon-btn" title={audio.playing ? "Pause music" : "Play music"}>
+            {audio.playing ? (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+            ) : (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M11 5L6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+            )}
+          </button>
+        )}
 
         {/* Menu */}
         <button onClick={onMenuToggle} className="icon-btn" aria-label="Menu">

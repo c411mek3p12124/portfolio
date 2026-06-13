@@ -4,11 +4,11 @@ import { useContentStore } from "./ContentProvider";
 import { ThemePanel, LayoutPanel, SequencesPanel } from "./StylePanels";
 import ResponsivePreview from "./ResponsivePreview";
 import FullscreenMenu from "@/components/FullscreenMenu";
-import { GitHubSettings, loadSettings, saveSettings, commitContent } from "@/lib/github";
+import { GitHubSettings, loadSettings, saveSettings, commitContent, commitBinaryFile } from "@/lib/github";
 import type { SiteContent } from "@/lib/content";
 
 type Status = { kind: "idle" | "saving" | "ok" | "err"; msg?: string };
-type Panel = null | "github" | "theme" | "layout" | "sequences";
+type Panel = null | "github" | "theme" | "layout" | "sequences" | "music";
 
 const JUMP = [
   { id: "home", label: "Hero" },
@@ -23,13 +23,15 @@ const JUMP = [
 ];
 
 export default function OperatorToolbar() {
-  const { content, dirty, markSaved, hydrate, editing, setEditing } = useContentStore();
+  const { content, dirty, markSaved, hydrate, editing, setEditing, get, set } = useContentStore();
   const [settings, setSettings] = useState<GitHubSettings | null>(null);
   const [panel, setPanel] = useState<Panel>(null);
   const [rp, setRp] = useState<null | "desktop" | "tablet" | "mobile">(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [status, setStatus] = useState<Status>({ kind: "idle" });
   const importRef = useRef<HTMLInputElement>(null);
+  const musicRef = useRef<HTMLInputElement>(null);
+  const [musicPreview, setMusicPreview] = useState("");
 
   useEffect(() => { setSettings(loadSettings()); }, []);
   if (!settings) return null;
@@ -70,6 +72,39 @@ export default function OperatorToolbar() {
       catch { setStatus({ kind: "err", msg: "Invalid JSON file." }); }
     };
     reader.readAsText(file);
+  };
+
+  const uploadMusic = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (!settings.owner || !settings.repo || !settings.token) {
+      setPanel("github");
+      setStatus({ kind: "err", msg: "Add your GitHub token first (to store the audio file)." });
+      return;
+    }
+    if (file.size > 12 * 1024 * 1024) {
+      setStatus({ kind: "err", msg: "Audio too large (max ~12 MB). Use a shorter / compressed mp3." });
+      return;
+    }
+    setStatus({ kind: "saving" });
+    try {
+      const dataUrl: string = await new Promise((res, rej) => {
+        const r = new FileReader();
+        r.onload = () => res(r.result as string);
+        r.onerror = rej;
+        r.readAsDataURL(file);
+      });
+      const base64 = dataUrl.split(",")[1] || "";
+      const ext = (file.name.split(".").pop() || "mp3").toLowerCase().replace(/[^a-z0-9]/g, "") || "mp3";
+      const repoPath = `public/audio/track.${ext}`;
+      await commitBinaryFile(settings, repoPath, base64);
+      set("audio.track", `/audio/track.${ext}`);
+      setMusicPreview(URL.createObjectURL(file)); // local preview until Vercel redeploys
+      setStatus({ kind: "ok", msg: "Music uploaded & committed. Click 'Save to GitHub', then it goes live after redeploy." });
+    } catch (err: any) {
+      setStatus({ kind: "err", msg: err.message || "Upload failed." });
+    }
   };
 
   const jump = (id: string) => {
@@ -120,6 +155,9 @@ export default function OperatorToolbar() {
         <button className="icon-btn !w-9 !h-9" title="Sequences (timed overlays)" onClick={() => setPanel("sequences")}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polygon points="5 3 19 12 5 21 5 3" /></svg>
         </button>
+        <button className="icon-btn !w-9 !h-9" title="Background music (upload mp3)" onClick={() => setPanel("music")}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 18V5l12-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="16" r="3" /></svg>
+        </button>
         <button className="icon-btn !w-9 !h-9" title="Edit hamburger menu" onClick={() => setMenuOpen(true)}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" /></svg>
         </button>
@@ -133,6 +171,7 @@ export default function OperatorToolbar() {
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 8l5-5 5 5M12 3v12" /></svg>
         </button>
         <input ref={importRef} type="file" accept="application/json" className="hidden" onChange={importJson} />
+        <input ref={musicRef} type="file" accept="audio/*,.mp3,.m4a,.ogg,.wav" className="hidden" onChange={uploadMusic} />
 
         <button className="btn-primary !py-2.5 !px-5 !text-[13px]" onClick={save} disabled={status.kind === "saving"}>
           {status.kind === "saving" ? "Saving…" : "Save to GitHub"}
@@ -151,6 +190,35 @@ export default function OperatorToolbar() {
       {panel === "sequences" && <SequencesPanel onClose={() => setPanel(null)} />}
       {rp && <ResponsivePreview initial={rp} onClose={() => setRp(null)} />}
       <FullscreenMenu isOpen={menuOpen} onClose={() => setMenuOpen(false)} onBack={() => setMenuOpen(false)} />
+
+      {panel === "music" && (
+        <div className="op-panel" onClick={() => setPanel(null)}>
+          <div className="op-panel-card" onClick={(e) => e.stopPropagation()}>
+            <h3 className="font-outfit font-bold text-lg mb-1" style={{ color: "var(--text)" }}>Background Music</h3>
+            <p className="font-outfit font-light text-[13px] mb-5" style={{ color: "var(--text-secondary)" }}>
+              Upload an mp3 (or m4a/ogg/wav, max ~12 MB). It&apos;s stored in your repo and plays from the speaker icon in the header / opening.
+            </p>
+            <div className="flex items-center gap-3 mb-4">
+              {get("audio.track")
+                ? <span className="font-outfit text-[12px]" style={{ color: "rgb(var(--highlight-rgb))" }}>Current: {String(get("audio.track")).split("/").pop()}</span>
+                : <span className="font-outfit text-[12px]" style={{ color: "var(--text-muted)" }}>No music yet.</span>}
+            </div>
+            {(musicPreview || get("audio.track")) && (
+              <audio key={musicPreview || String(get("audio.track"))} controls src={musicPreview || get("audio.track")} className="w-full mb-4" />
+            )}
+            <div className="flex gap-3">
+              <button className="btn-primary flex-1 !py-3" onClick={() => musicRef.current?.click()} disabled={status.kind === "saving"}>
+                {status.kind === "saving" ? "Uploading…" : (get("audio.track") ? "Replace music" : "Upload mp3")}
+              </button>
+              {get("audio.track") && <button className="btn-outline !py-3" onClick={() => { set("audio.track", ""); setStatus({ kind: "ok", msg: "Music removed. Click 'Save to GitHub' to apply." }); }}>Remove</button>}
+              <button className="btn-outline !py-3" onClick={() => setPanel(null)}>Close</button>
+            </div>
+            <p className="font-outfit text-[11px] mt-4" style={{ color: "var(--text-muted)" }}>
+              After uploading, click <b>Save to GitHub</b>. The track goes live once Vercel finishes redeploying (~1 min). Plays only after a visitor clicks the speaker icon (browser rule).
+            </p>
+          </div>
+        </div>
+      )}
 
       {panel === "github" && (
         <div className="op-panel" onClick={() => setPanel(null)}>
