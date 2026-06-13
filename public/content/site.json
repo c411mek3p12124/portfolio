@@ -434,6 +434,33 @@
     },
     "achievements.items.1.image": {
       "width": "80%"
+    },
+    "footer.nav.1.label": {
+      "fontSize": "40px"
+    },
+    "footer.nav.2.label": {
+      "fontSize": "40px"
+    },
+    "footer.nav.0.label": {
+      "fontSize": "40px"
+    },
+    "footer.nav.3.label": {
+      "fontSize": "40px"
+    },
+    "footer.nav.4.label": {
+      "fontSize": "40px"
+    },
+    "footer.nav.5.label": {
+      "fontSize": "40px"
+    },
+    "footer.nav.6.label": {
+      "fontSize": "40px"
+    },
+    "footer.nav.7.label": {
+      "fontSize": "40px"
+    },
+    "footer.nav.8.label": {
+      "fontSize": "40px"
     }
   },
   "theme": {
