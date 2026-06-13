@@ -356,7 +356,7 @@
     "location": "Based in Bali, Indonesia",
     "sendLabel": "Send Message",
     "sentLabel": "Message sent — thank you!",
-    "accessKey": ""
+    "accessKey": "cf02ed9b-d647-402c-96ea-8b3d37244169"
   },
   "footer": {
     "tagline": "Digital Business Architect & AI Integrator. Building ventures and AI-powered systems.",
@@ -645,7 +645,7 @@
     "contactSend": {
       "arrow": false,
       "radius": "7px",
-      "link": "pradnyabudipratama@gmail.com"
+      "link": ""
     },
     "clientsCategory": {
       "radius": "7px"
