@@ -1,7 +1,6 @@
 "use client";
 import { motion } from "motion/react";
 import { useTheme } from "./ThemeProvider";
-import { useContentStore } from "./content/ContentProvider";
 import { LogoDisplay } from "./content/Brand";
 
 interface HeaderProps {
@@ -13,7 +12,6 @@ interface HeaderProps {
 
 export default function Header({ onMenuToggle, isMenuOpen, soundOn, onToggleSound }: HeaderProps) {
   const { theme, toggle } = useTheme();
-  const { get } = useContentStore();
 
   return (
     <motion.header
@@ -26,7 +24,6 @@ export default function Header({ onMenuToggle, isMenuOpen, soundOn, onToggleSoun
         <div className="w-9 h-9 rounded-xl glass-static flex items-center justify-center overflow-hidden">
           <LogoDisplay slot="header" imgClass="w-9 h-9 object-contain" textClass="font-outfit font-bold text-xs" />
         </div>
-        <span className="hidden md:block font-outfit font-semibold text-sm tracking-tight" style={{ color: "var(--text)" }}>{get("brand.alias")}</span>
       </a>
 
       {/* Right controls */}

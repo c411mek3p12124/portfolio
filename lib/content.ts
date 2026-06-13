@@ -234,6 +234,8 @@ export interface SiteContent {
     email: string;
     location: string;
     sendLabel?: string;
+    accessKey?: string; // Web3Forms access key — the form really sends to that key's email.
+    sentLabel?: string;
   };
   footer: {
     tagline: string;
@@ -514,6 +516,8 @@ export const DEFAULT_CONTENT: SiteContent = {
     email: "callmekeprra@gmail.com",
     location: "Based in Bali, Indonesia",
     sendLabel: "Send Message",
+    sentLabel: "Message sent — thank you!",
+    accessKey: "",
   },
 
   footer: {
