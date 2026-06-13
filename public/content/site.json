@@ -354,7 +354,9 @@
     "intro": "Whether it's a venture, a platform, or an AI-powered system — let's talk.",
     "email": "callmekeprra@gmail.com",
     "location": "Based in Bali, Indonesia",
-    "sendLabel": "Send Message"
+    "sendLabel": "Send Message",
+    "sentLabel": "Message sent — thank you!",
+    "accessKey": ""
   },
   "footer": {
     "tagline": "Digital Business Architect & AI Integrator. Building ventures and AI-powered systems.",
