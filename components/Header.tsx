@@ -1,7 +1,6 @@
 "use client";
 import { motion } from "motion/react";
 import { useTheme } from "./ThemeProvider";
-import { LogoDisplay } from "./content/Brand";
 
 interface HeaderProps {
   onMenuToggle: () => void;
@@ -15,17 +14,10 @@ export default function Header({ onMenuToggle, isMenuOpen, soundOn, onToggleSoun
 
   return (
     <motion.header
-      className="fixed top-0 left-0 right-0 z-[100] flex items-center justify-between px-5 md:px-10"
+      className="fixed top-0 left-0 right-0 z-[100] flex items-center justify-end px-5 md:px-10"
       style={{ height: "var(--header-h)", background: "var(--bg)", borderBottom: "1px solid var(--border)" }}
       initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2 }}
     >
-      {/* Logo */}
-      <a href="#" className="flex items-center gap-3">
-        <div className="w-9 h-9 rounded-xl glass-static flex items-center justify-center overflow-hidden">
-          <LogoDisplay slot="header" imgClass="w-9 h-9 object-contain" textClass="font-outfit font-bold text-xs" />
-        </div>
-      </a>
-
       {/* Right controls */}
       <div className="flex items-center gap-2">
         {/* Theme toggle */}

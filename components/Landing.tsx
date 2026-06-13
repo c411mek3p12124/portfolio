@@ -2,7 +2,6 @@
 import { motion } from "motion/react";
 import { EditableText } from "./content/Editable";
 import { EditableButton } from "./content/EditableButton";
-import { BrandMark, LogoDisplay } from "./content/Brand";
 
 interface LandingProps {
   onPortfolio: () => void;
@@ -14,14 +13,6 @@ interface LandingProps {
 export default function Landing({ onPortfolio, onContact, soundOn, onToggleSound }: LandingProps) {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-6 atmosphere relative overflow-hidden">
-      {/* Logo top-left */}
-      <motion.div
-        className="absolute top-6 left-6 md:left-12"
-        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.2 }}
-      >
-        <LogoDisplay slot="landingTop" imgClass="w-10 h-10 object-contain" textClass="font-outfit font-bold text-lg" />
-      </motion.div>
-
       {/* Sound toggle top-right */}
       <motion.button
         onClick={onToggleSound}
@@ -38,12 +29,6 @@ export default function Landing({ onPortfolio, onContact, soundOn, onToggleSound
 
       {/* Center content */}
       <div className="text-center max-w-lg">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.7, delay: 0.1, ease: [0.65, 0, 0.35, 1] }}
-        >
-          <BrandMark slot="landingCenter" />
-        </motion.div>
-
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.3 }}>
           <EditableText path="landing.title" as="h1" className="font-outfit font-bold text-[clamp(2rem,5vw,3rem)] tracking-tightest leading-tight mb-1" style={{ color: "var(--text)" }} />
         </motion.div>
